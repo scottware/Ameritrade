@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import sys
 
+DEBUG = 0
 credentials = {}
 pd.set_option('display.max_rows', None, )
 pd.set_option('display.max_columns', None, )
@@ -12,7 +13,8 @@ pd.set_option('display.width', 1000)
 
 
 def load_credentials(error_message=None):
-    print("### " + sys._getframe().f_code.co_name)
+    if DEBUG == 1:
+        print("### " + sys._getframe().f_code.co_name)
 
     save = False
     global credentials
@@ -93,7 +95,8 @@ def load_credentials(error_message=None):
 
 
 def get_quote(symbol):
-    print("### " + sys._getframe().f_code.co_name)
+    if DEBUG == 1:
+        print("### " + sys._getframe().f_code.co_name)
 
     symbol = symbol.upper()
     load_credentials()
@@ -130,7 +133,9 @@ def get_quote(symbol):
 
 
 def get_chain(symbol):
-    print("### " + sys._getframe().f_code.co_name)
+    if DEBUG == 1:
+        print("### " + sys._getframe().f_code.co_name)
+
     base_url = 'https://api.tdameritrade.com/v1/marketdata/chains?&symbol={stock_ticker}&contractType={contractType}'
 
     endpoint = base_url.format(stock_ticker=symbol, contractType='PUT')
@@ -168,7 +173,8 @@ def get_chain(symbol):
 
 
 def is_cheap(symbol):
-    print("### " + sys._getframe().f_code.co_name)
+    if DEBUG == 1:
+        print("### " + sys._getframe().f_code.co_name)
 
     symbol = symbol.upper()
     quote = get_quote(symbol)
@@ -202,7 +208,8 @@ def is_cheap(symbol):
 
 
 def get_account():
-    print("### " + sys._getframe().f_code.co_name)
+    if DEBUG == 1:
+        print("### " + sys._getframe().f_code.co_name)
 
     load_credentials()
     global credentials
@@ -220,39 +227,75 @@ def get_account():
 
 
 def get_positions():
-    print("### " + sys._getframe().f_code.co_name)
+    if DEBUG == 1:
+        print("### " + sys._getframe().f_code.co_name)
 
     content = get_account()
     positions = content['securitiesAccount']['positions']
     for position in positions:
         instrument = position['instrument']
         description = instrument['symbol']
-        print(f'{description} {position["shortQuantity"]}')
+        #print(f'{description} {position["shortQuantity"]}')
+    return positions
 
 
-def roll_options(option):
-    print("### " + sys._getframe().f_code.co_name)
+def roll_options():
+    if DEBUG == 1:
+        print("### " + sys._getframe().f_code.co_name)
 
-    (symbol, x) = option.split("_")
+    positions = get_positions()
+    options = filter(lambda positions: len(positions['instrument']['symbol']) > 5, positions)
+    filtered=[]
+    for x in options:
+        filtered.append(x['instrument']['symbol'])
+    filtered.sort()
 
-    range = 0.015
+    print("-------------")
+    print(f'0. Exit')
+    for x in filtered:
+        index = filtered.index(x) + 1
+        (symbol, o) = x.split("_")
+        (date, strike) = o.split("P")
 
-    quote = get_quote(symbol)
-    print(f'{symbol} {quote["lastPrice"]}  {quote["netChange"]}')
-    df = get_chain(symbol.upper())
-    mine = df[(df['Symbol'] == option)]
+        print(f'{index}. {date} ${strike}')
+    print("-------------")
 
-    # my_bid = df
-    mark = mine['Mark'].values[0]
-    low = mark * (1 - range)
-    high = mark * (1 + range)
-    days = mine['Days'].values[0]
-    choices = df[
-        (df['Mark'] * 1.0 < high) & (df['Mark'] * 1.0 > low) & (df['Days'] > days)]  # and date is later than Mine
-    choices = choices.sort_values(by=['Days'])
+    num = input()
+    n=0
+    try:
+        n=int(num)
+    except ValueError:
+        print(f'invalid number {num}')
+        roll_options()
 
-    print(mine)
-    print(choices)
+    if n == 0:
+        return
+    elif n > len(filtered):
+        print(f'invalid number {n}')
+        roll_options()
+    else:
+        choice = filtered[n-1]
+        (symbol, x) = choice.split("_")
+        range = 0.015
+
+        quote = get_quote(symbol)
+        print(f'{symbol} {quote["lastPrice"]}  {quote["netChange"]}')
+        df = get_chain(symbol.upper())
+        mine = df[(df['Symbol'] == choice)]
+
+        # my_bid = df
+        print(mine)
+        print("----------------------------------------------------------------------------------------------------------------------")
+        mark = mine['Mark'].values[0]
+        low = mark * (1 - range)
+        high = mark * (1 + range)
+        days = mine['Days'].values[0]
+        choices = df[
+            (df['Mark'] * 1.0 < high) & (df['Mark'] * 1.0 > low) & (df['Days'] > days)]  # and date is later than Mine
+        choices = choices.sort_values(by=['Days'])
+
+        print(choices)
+        roll_options()
 
 def buy():
     print("### " + sys._getframe().f_code.co_name)

@@ -2,17 +2,17 @@ import tda
 
 def inner_loop(symbol = 'AMZN'):
     print("-------------")
+    print("0. Exit")
     print("1. Get Quote")
     print("2. Recommend")
     print("3. Positions")
     print("4. Roll")
     print("5. Buy")
-    print("9. Exit")
     print("-------------")
     task = input()
-    command_list = ['1', '2', '3', '4','5', '9']
+    command_list = ['0', '1', '2', '3', '4','5']
     if(task in command_list):
-        if (task == "9"):
+        if (task == "0"):
             sys.exit("exiting")
         if (task == "3"):
             tda.get_positions()
@@ -32,9 +32,9 @@ def inner_loop(symbol = 'AMZN'):
         if(task == "2"):
             tda.is_cheap(symbol)
         if (task == "4"):
-            print(f'{symbol} option name')
-            s = input()
-            tda.roll_options(s)
+            # print(f'{symbol} option name')
+            # s = input()
+            tda.roll_options()
     inner_loop(symbol)
 
 

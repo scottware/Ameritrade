@@ -5,16 +5,17 @@ import pandas as pd
 import numpy as np
 import sys
 
-DEBUG = 0
 credentials = {}
 pd.set_option('display.max_rows', None, )
 pd.set_option('display.max_columns', None, )
 pd.set_option('display.width', 1000)
 
 class TDA:
+    def __init__(self, config):
+        self.config = config
 
     def load_credentials(self, error_message=None):
-        if DEBUG == 1:
+        if self.config.debug == True:
             print("### " + sys._getframe().f_code.co_name)
 
         save = False
@@ -96,7 +97,7 @@ class TDA:
 
 
     def get_quote(self, symbol):
-        if DEBUG == 1:
+        if self.config.debug == True:
             print("### " + sys._getframe().f_code.co_name)
 
         symbol = symbol.upper()
@@ -134,7 +135,7 @@ class TDA:
 
 
     def get_chain(self, symbol):
-        if DEBUG == 1:
+        if self.config.debug == True:
             print("### " + sys._getframe().f_code.co_name)
 
         base_url = 'https://api.tdameritrade.com/v1/marketdata/chains?&symbol={stock_ticker}&contractType={contractType}'
@@ -174,7 +175,7 @@ class TDA:
 
 
     def is_cheap(self, symbol):
-        if DEBUG == 1:
+        if self.config.debug == True:
             print("### " + sys._getframe().f_code.co_name)
 
         symbol = symbol.upper()
@@ -209,7 +210,7 @@ class TDA:
 
 
     def get_account(self):
-        if DEBUG == 1:
+        if self.config.debug == True:
             print("### " + sys._getframe().f_code.co_name)
 
         self.load_credentials()
@@ -228,21 +229,17 @@ class TDA:
 
 
     def get_positions(self):
-        if DEBUG == 1:
+        if self.config.debug == True:
             print("### " + sys._getframe().f_code.co_name)
 
         content = self.get_account()
         positions = content['securitiesAccount']['positions']
 
-        for position in positions:
-            instrument = position['instrument']
-            description = instrument['symbol']
-            print(f'{description} {position["shortQuantity"]}')
         return positions
 
 
     def roll_options(self):
-        if DEBUG == 1:
+        if self.config.debug == True:
             print("### " + sys._getframe().f_code.co_name)
 
         positions = self.get_positions()
@@ -299,8 +296,49 @@ class TDA:
             print(choices)
             self.roll_options()
 
+    def roll_options_consolidate(self):
+        if self.config.debug == True:
+            print("### " + sys._getframe().f_code.co_name)
+
+        positions = self.get_positions()
+        options = filter(lambda positions: len(positions['instrument']['symbol']) > 5, positions)
+
+        total_value = 0.0
+        total_quantity = 0
+        symbol = ''
+
+        for x in options:
+            symbol = x['instrument']['symbol']
+            quantity = x['shortQuantity']
+            quote = self.get_quote(symbol)
+            total_quantity += int(quantity)
+            total_value += float(quantity) * float(quote['mark'])
+
+        (symbol, z) = symbol.split("_")
+
+        print(f'total value: {total_value}')
+        mark = round(total_value/total_quantity,2)
+        print(f'avg {mark}')
+
+        range = 0.01
+        low = mark * (1 - range)
+        high = mark * (1 + range)
+        # days = mine['Days'].values[0]
+
+        quote = self.get_quote(symbol)
+        print(f'{symbol} {quote["lastPrice"]}  {quote["netChange"]}')
+        df = self.get_chain(symbol.upper())
+        days=0
+        print("----------------------------------------------------------------------------------------------------------------------")
+        choices = df[
+            (df['Mark'] * 1.0 < high) & (df['Mark'] * 1.0 > low) & (df['Days'] > days)]  # and date is later than Mine
+        choices = choices.sort_values(by=['Days'])
+
+        print(choices)
+
     def buy(self):
-        print("### " + sys._getframe().f_code.co_name)
+        if self.config.debug == True:
+            print("### " + sys._getframe().f_code.co_name)
 
         self.load_credentials()
         global credentials

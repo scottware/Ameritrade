@@ -1,9 +1,21 @@
 import tda
 
+class Congifuration:
+    def __init__(self, value=False):
+        self.debug = value
+
+    @property
+    def debug(self):
+        return self._debug
+
+    @debug.setter
+    def debug(self, value):
+        self._debug=value
+
 class Main:
 
     def __init__(self):
-        self.tda = tda.TDA()
+        self.tda = tda.TDA(Congifuration())
 
 
     def inner_loop(self, symbol = 'AMZN'):
@@ -13,16 +25,22 @@ class Main:
         print("2. Recommend")
         print("3. Positions")
         print("4. Roll")
-        print("5. Buy")
+        print("5. Roll - consolidate")
+        print("6. Buy")
         print("-------------")
         task = input()
-        command_list = ['0', '1', '2', '3', '4','5']
+        command_list = ['0', '1', '2', '3', '4','5','6']
         if(task in command_list):
             if (task == "0"):
                 sys.exit("exiting")
             if (task == "3"):
-                self.tda.get_positions()
-            if (task == "5"):
+                positions = self.tda.get_positions()
+                for position in positions:
+                    instrument = position['instrument']
+                    description = instrument['symbol']
+                    print(f'{description} {position["shortQuantity"]}')
+
+            if (task == "6"):
                 self.tda.buy()
 
             s = None
@@ -41,6 +59,10 @@ class Main:
                 # print(f'{symbol} option name')
                 # s = input()
                 self.tda.roll_options()
+            if (task == "5"):
+                # print(f'{symbol} option name')
+                # s = input()
+                self.tda.roll_options_consolidate()
         self.inner_loop(symbol)
 
 

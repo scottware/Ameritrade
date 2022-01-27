@@ -167,10 +167,13 @@ class TDA:
                 #if (daysToExpiration == 0):
                 #    pass
                 #else:
-                new_row = {'Days': daysToExpiration, 'Symbol': option_symbol, 'Description': description,
-                           'Strike': strike, 'Bid': bid, 'Mark': mark, 'Ask': ask,
-                           'Daily Value': dailyValue, 'Bid Value': bidValue}
-                df = df.append(new_row, ignore_index=True)
+
+                new_data = [daysToExpiration,option_symbol,description,strike,bid,mark,ask,
+                            dailyValue,bidValue]
+                new_data_cols = ['Days', 'Symbol', 'Description', 'Strike', 'Bid', 'Mark', 'Ask',
+                                 'Daily Value', 'Bid Value']
+                new_row = pd.DataFrame([new_data], columns=new_data_cols)
+                df = pd.concat([df,new_row], ignore_index=True)
         return df
 
 

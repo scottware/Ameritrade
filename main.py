@@ -1,4 +1,6 @@
 import tda
+import sys
+from colorama import init, Fore, Back, Style
 
 class Congifuration:
     def __init__(self, value=False):
@@ -52,7 +54,10 @@ class Main:
                 symbol = s
             if(task == "1"):
                 quote = self.tda.get_quote(symbol)
-                print(f'{symbol} {quote["lastPrice"]}  {quote["netChange"]}')
+                color = Fore.RED
+                if quote["netChange"]>0:
+                    color=Fore.GREEN
+                print(f'{symbol}  {Style.BRIGHT} {quote["lastPrice"]} {color} {quote["netChange"]}')
             if(task == "2"):
                 self.tda.is_cheap(symbol)
             if (task == "4"):

@@ -4,6 +4,7 @@ import urllib
 import pandas as pd
 import numpy as np
 import sys
+from colorama import init, Fore, Back, Style
 
 credentials = {}
 pd.set_option('display.max_rows', None, )
@@ -13,6 +14,7 @@ pd.set_option('display.width', 1000)
 class TDA:
     def __init__(self, config):
         self.config = config
+        init(autoreset=True)
 
     def load_credentials(self, error_message=None):
         if self.config.debug == True:
@@ -130,9 +132,14 @@ class TDA:
             # print(f'Last Price {lastPrice}')
             # print(f'Close Price {closePrice}')
             # print(f'Change {netChange}')
-
             return content[symbol]
 
+    def print_quote(self, quote):
+        color = Fore.RED
+        if quote["netChange"] > 0:
+            color = Fore.GREEN
+
+        print(f'{quote["symbol"]}  {Style.BRIGHT} {quote["lastPrice"]} {color} {quote["netChange"]}{Fore.RESET}')
 
     def get_chain(self, symbol):
         if self.config.debug == True:
@@ -183,6 +190,7 @@ class TDA:
 
         symbol = symbol.upper()
         quote = self.get_quote(symbol)
+        self.print_quote(quote)
 
         lastPrice = quote['lastPrice']
         bidPrice = quote['bidPrice']
@@ -196,10 +204,6 @@ class TDA:
 
         df = self.get_chain(symbol)
         print(f'Closing Price {closePrice}')
-        print(f'Last Price {lastPrice}')
-
-        # print(type(df))
-        # df.shape
 
         # df.query('Strike <= closePrice')
         is_cheap = df[(df['Strike'] <= lastPrice) &
@@ -281,7 +285,8 @@ class TDA:
             range = 0.015
 
             quote = self.get_quote(symbol)
-            print(f'{symbol} {quote["lastPrice"]}  {quote["netChange"]}')
+            self.print_quote(quote)
+
             df = self.get_chain(symbol.upper())
             mine = df[(df['Symbol'] == choice)]
 
@@ -321,7 +326,7 @@ class TDA:
 
         print(f'total value: {total_value}')
         mark = round(total_value/total_quantity,2)
-        print(f'avg {mark}')
+        print('AVG: ' + Style.BRIGHT  + Fore.BLUE + str(mark))
 
         range = 0.01
         low = mark * (1 - range)
@@ -329,7 +334,7 @@ class TDA:
         # days = mine['Days'].values[0]
 
         quote = self.get_quote(symbol)
-        print(f'{symbol} {quote["lastPrice"]}  {quote["netChange"]}')
+        self.print_quote(quote)
         df = self.get_chain(symbol.upper())
         days=0
         print("----------------------------------------------------------------------------------------------------------------------")

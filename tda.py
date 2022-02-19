@@ -26,8 +26,21 @@ class TDA:
         if (not ('access_token' in credentials)
                 or not ('refresh_token' in credentials)
                 or not ('td_consumer_key' in credentials)):
-            f = open('credentials.json')
-            credentials = json.load(f)
+            try:
+                file = open('credentials.json', 'r')
+                credentials = json.load(file)
+
+            except IOError:
+                file = open('credentials.json', 'w')
+                print('Enter the consumer key')
+                consumer_key = input()
+                credentials['td_consumer_key'] = consumer_key
+                credentials['access_token'] = ''
+                credentials['refresh_token'] = ''
+                credential_prep = json.dumps(credentials)
+                file.write(credential_prep)
+                file.close()
+
 
         if (not ('td_consumer_key' in credentials) or
                 (credentials['td_consumer_key'] == None or credentials['td_consumer_key'] == '')):
@@ -93,9 +106,9 @@ class TDA:
         ####    'Not Authorized.'
         if (save):
             credential_prep = json.dumps(credentials)
-            f = open("credentials.json", "w")
-            f.write(credential_prep)
-            f.close()
+            file = open("credentials.json", "w")
+            file.write(credential_prep)
+            file.close()
 
 
     def get_quote(self, symbol):
